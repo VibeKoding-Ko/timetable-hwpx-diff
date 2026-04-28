@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' })); // Add Form URL-e
 const upload = multer({ dest: os.tmpdir() });
 
 // API route to parse an uploaded file using Kordoc
-app.post('/api/parse', upload.single('file'), (req, res) => {
+app.post('/api/parse', upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
@@ -27,22 +27,24 @@ app.post('/api/parse', upload.single('file'), (req, res) => {
     const originalExt = path.extname(req.file.originalname);
     const tempFile = `${filePath}${originalExt}`;
 
-    // Rename to include extension so Kordoc can detect format
-    fs.renameSync(filePath, tempFile);
+    try {
+        // Rename to include extension so Kordoc can detect format
+        fs.renameSync(filePath, tempFile);
 
-    // Run Kordoc CLI via npx directly (without cmd /c) to preserve UTF-8 encoding
-    const cmd = `npx kordoc "${tempFile}" --format markdown`;
+        // Vercel Serverless 환경에서 안정적으로 실행하기 위해 child_process 대신 모듈을 직접 호출
+        const { parse, blocksToMarkdown } = await import('kordoc');
+        const blocks = await parse(tempFile);
+        const markdown = blocksToMarkdown(blocks);
 
-    exec(cmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
         // Clean up temp file
         fs.unlinkSync(tempFile);
-
-        if (error) {
-            console.error(`exec error: ${error}`);
-            return res.status(500).send('Error parsing file.');
-        }
-        res.send(stdout);
-    });
+        
+        res.send(markdown);
+    } catch (error) {
+        console.error('Kordoc parsing error:', error);
+        if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+        return res.status(500).send('Error parsing file.');
+    }
 });
 
 app.post('/api/download-hwp', (req, res) => {
