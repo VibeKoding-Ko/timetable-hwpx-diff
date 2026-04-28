@@ -1,0 +1,20 @@
+node_modules/
+uploads/
+.env
+.DS_Store
+
+# 테스트 파일 및 임시 파일 제외
+test*.js
+test*.json
+test*.hwpx
+test*.zip
+test_extract/
+test_adm_extract/
+template.zip
+template_extract/
+kordoc_err*.log
+
+# 사용자가 테스트용으로 업로드한 원본 파일 제외
+연간시간표*.hwp
+연간시간표*.HWP
+*.crdownload
