@@ -32,9 +32,9 @@ app.post('/api/parse', upload.single('file'), async (req, res) => {
         fs.renameSync(filePath, tempFile);
 
         // Vercel Serverless 환경에서 안정적으로 실행하기 위해 child_process 대신 모듈을 직접 호출
-        const { parse, blocksToMarkdown } = await import('kordoc');
-        const blocks = await parse(tempFile);
-        const markdown = blocksToMarkdown(blocks);
+        const { parse } = await import('kordoc');
+        const result = await parse(tempFile);
+        const markdown = result.markdown || '';
 
         // Clean up temp file
         fs.unlinkSync(tempFile);
