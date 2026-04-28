@@ -4,16 +4,18 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+const os = require('os');
+
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Middleware to serve static files (frontend)
 app.use(express.static('public'));
 app.use(express.json({ limit: '1mb' })); // Add JSON body parsing middleware
 app.use(express.urlencoded({ extended: true, limit: '1mb' })); // Add Form URL-encoded parsing middleware
 
-// Set up Multer for file uploads
-const upload = multer({ dest: 'uploads/' });
+// Set up Multer for file uploads (Use /tmp for serverless environments like Vercel)
+const upload = multer({ dest: os.tmpdir() });
 
 // API route to parse an uploaded file using Kordoc
 app.post('/api/parse', upload.single('file'), (req, res) => {
@@ -29,7 +31,7 @@ app.post('/api/parse', upload.single('file'), (req, res) => {
     fs.renameSync(filePath, tempFile);
 
     // Run Kordoc CLI via npx directly (without cmd /c) to preserve UTF-8 encoding
-    const cmd = `npx -y kordoc "${tempFile}" --format markdown`;
+    const cmd = `npx kordoc "${tempFile}" --format markdown`;
 
     exec(cmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
         // Clean up temp file
@@ -48,7 +50,7 @@ app.post('/api/download-hwp', (req, res) => {
 
     const templatePath = path.join(__dirname, '결과템플릿.hwpx');
     const outputFileName = `diff_${Date.now()}`;
-    const outputPath = path.join(__dirname, 'uploads', `${outputFileName}.hwpx`);
+    const outputPath = path.join(os.tmpdir(), `${outputFileName}.hwpx`);
     const JSZip = require('adm-zip');
     
     try {
@@ -94,6 +96,10 @@ app.post('/api/download-hwp', (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Server listening on http://localhost:${port}`);
-});
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`Server listening on http://localhost:${port}`);
+    });
+}
+
+module.exports = app;
