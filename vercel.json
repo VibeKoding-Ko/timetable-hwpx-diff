@@ -5,14 +5,22 @@
       "src": "server.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["결과템플릿.hwpx", "public/**"]
+        "includeFiles": ["결과템플릿.hwpx"]
       }
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "destination": "/server.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/$1"
     }
   ]
 }
