@@ -10,7 +10,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware to serve static files (frontend)
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '1mb' })); // Add JSON body parsing middleware
 app.use(express.urlencoded({ extended: true, limit: '1mb' })); // Add Form URL-encoded parsing middleware
 
